@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>HAPPY BIRTHDAY DEBOJIT — Chaos Matrix</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="stage">
+    <canvas id="fireworks"></canvas>
+    <div class="matrix" id="matrix"></div>
+    <div class="gallery" id="gallery"></div>
+
+    <div class="center-text">
+      <h1 id="headline" data-text="HAPPY BIRTHDAY DEBOJIT">HAPPY BIRTHDAY DEBOJIT</h1>
+    </div>
+
+    <div class="glitch-bar" style="top:18%"></div>
+    <div class="glitch-bar" style="top:38%;animation-duration:2.3s;opacity:.08"></div>
+    <div class="glitch-bar" style="top:58%;animation-duration:4s;opacity:.06"></div>
+
+    <div class="hud">H A P P Y  B I R T H D A Y  •  D E B O J I T</div>
+  </div>
+
+<script>
+/* ---------------- CONFIG ---------------- */
+const imagePaths = [
+  'hello (1).jpeg',  // example image paths
+  'hello (2).jpeg',
+  'hello (3).jpeg',
+  'hello (4).jpeg',
+  'hello (5).jpeg',
+  'hello (6).jpeg'
+];
+
+/* ------------- MATRIX RAIN -------------- */
+const matrixEl = document.getElementById('matrix');
+const cols = Math.floor(window.innerWidth / 14);
+for(let i=0;i<cols;i++){
+  const c = document.createElement('div');
+  c.className='col';
+  c.style.left = (i*14)+'px';
+  const chars='01ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let t=''; const len=20+Math.random()*60|0;
+  for(let j=0;j<len;j++) t+=chars[Math.random()*chars.length|0]+'<br>';
+  c.innerHTML=t;
+  c.style.animationDuration=(6+Math.random()*12)+'s';
+  matrixEl.appendChild(c);
+}
+
+/* ------------- PHOTO CHAOS -------------- */
+const g=document.getElementById('gallery');
+function rand(min,max){return min+Math.random()*(max-min)}
+function px(min,max){return rand(min,max)+'px'}
+imagePaths.forEach((src,i)=>{
+  const im=document.createElement('img');
+  im.className='photo';
+  im.src=src;
+  im.onerror=()=>im.style.background='hsl('+i*45+',60%,45%)';
+  im.style.left=rand(5,90)+'%';
+  im.style.top=rand(5,75)+'%';
+  ['x0','x1','x2','x3'].forEach(v=>im.style.setProperty('--'+v,px(-400,400)));
+  ['y0','y1','y2','y3'].forEach(v=>im.style.setProperty('--'+v,px(-200,200)));
+  ['r0','r1','r2','r3'].forEach(v=>im.style.setProperty('--'+v,rand(-90,90)+'deg'));
+  ['rx0','rx1','rx2','rx3','ry0','ry1','ry2','ry3']
+     .forEach(v=>im.style.setProperty('--'+v,rand(-30,30)+'deg'));
+  im.style.setProperty('--dur',(6+Math.random()*14)+'s');
+  g.appendChild(im);
+});
+
+/* ------------- FIREWORKS ---------------- */
+const canvas=document.getElementById('fireworks');
+const ctx=canvas.getContext('2d');
+let W=canvas.width=innerWidth,H=canvas.height=innerHeight;
+addEventListener('resize',()=>{W=canvas.width=innerWidth;H=canvas.height=innerHeight;});
+const fireworks=[],sparks=[],G=0.08;
+class F{constructor(x,y,h){this.x=x;this.y=H;this.tx=x;this.ty=y;this.h=h;
+this.vx=rand(-2,2);this.vy=rand(-11,-7);this.e=false;}
+u(){this.x+=this.vx;this.y+=this.vy;this.vy+=G*0.6;
+if(this.vy>-0.5&&this.y<=this.ty+rand(-10,10)){this.e=true;for(let i=0;i<25+Math.random()*30;i++)sparks.push(new S(this.x,this.y,this.h));}}
+d(){ctx.beginPath();ctx.fillStyle=`hsl(${this.h},100%,60%)`;ctx.arc(this.x,this.y,2.5,0,Math.PI*2);ctx.fill();}}
+class S{constructor(x,y,h){const a=Math.random()*2*Math.PI,s=rand(1,6);
+this.x=x;this.y=y;this.vx=Math.cos(a)*s;this.vy=Math.sin(a)*s;this.a=1;this.h=h+rand(-20,20);this.decay=rand(0.008,0.02);}
+u(){this.vy+=G*0.12;this.x+=this.vx;this.y+=this.vy;this.a-=this.decay;}
+d(){ctx.globalAlpha=Math.max(0,this.a);ctx.fillStyle=`hsl(${this.h},100%,65%)`;
+ctx.beginPath();ctx.arc(this.x,this.y,2+Math.random()*2,0,2*Math.PI);ctx.fill();ctx.globalAlpha=1;}}
+function loop(){requestAnimationFrame(loop);
+ctx.fillStyle='rgba(0,0,0,0.18)';ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='lighter';
+if(Math.random()<0.04)fireworks.push(new F(rand(80,W-80),rand(80,H/2),rand(100,160)));
+for(let i=fireworks.length-1;i>=0;i--){fireworks[i].u();fireworks[i].d();if(fireworks[i].e)fireworks.splice(i,1);}
+for(let i=sparks.length-1;i>=0;i--){sparks[i].u();sparks[i].d();if(sparks[i].a<=0)sparks.splice(i,1);}
+}
+loop();
+
+/* click = extra fireworks */
+document.body.addEventListener('click',e=>{
+  for(let i=0;i<6;i++)fireworks.push(new F(rand(e.clientX-40,e.clientX+40),rand(80,e.clientY-40),rand(100,160)));
+});
+
+/* ------------- small headline flicker ------------- */
+const h=document.getElementById('headline');
+setInterval(()=>{
+  h.style.transform=`translateZ(120px) scale(${1+Math.random()*0.06}) rotate(${Math.random()*2-1}deg)`;
+  setTimeout(()=>h.style.transform='translateZ(120px) scale(1) rotate(0deg)',150);
+},900+Math.random()*1400);
+</script>
+</body>
+</html>
